@@ -121,3 +121,37 @@ app.get('/songs', async (req, res) => {
       .send({ status: errorServer.statusText, data: errorServer.text })
   }
 })
+//agregar songs//
+app.post('/songs', async (req, res) => {
+  try {
+    const song = req.body
+    const resp = await validateInput(song)
+
+    const respSong = await validateSong(song)
+    if (respSong.status === 400) {
+      res.status(respSong.status).send({
+        status: respSong.statusText,
+        data: respSong.text,
+      })
+      return
+    }
+    if (resp.status === 200) {
+      const songs = JSON.parse(
+        await fsPromises.readFile(__dirname + '/data/repertorio.json', 'utf8')
+      )
+      songs.push(song)
+      await fsPromises.writeFile(
+        path.resolve(__dirname + '/data/repertorio.json'),
+        JSON.stringify(songs)
+      )
+    }
+    res.status(resp.status).send({
+      status: resp.statusText,
+      data: resp.text,
+    })
+  } catch (error) {
+    res
+      .status(errorServer.status)
+      .send({ status: errorServer.statusText, data: errorServer.text })
+  }
+})
