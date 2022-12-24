@@ -190,3 +190,40 @@ app.delete('/songs/:id', async (req, res) => {
       .send({ status: errorServer.statusText, data: errorServer.text })
   }
 })
+//modificar song/
+app.put('/songs/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const song = req.body
+    const resp = await validateInput(song)
+    const respId = await validateId(id)
+    if (respId.status === 400) {
+      res.status(respId.status).send({
+        status: respId.statusText,
+        data: respId.text,
+      })
+      return
+    }
+    if (resp.status === 200) {
+      const songs = JSON.parse(
+        await fsPromises.readFile(
+          path.resolve(__dirname + '/data/repertorio.json')
+        )
+      )
+      const index = songs.findIndex((p) => p.id == id)
+      songs[index] = song
+      await fsPromises.writeFile(
+        path.resolve(__dirname + '/data/repertorio.json'),
+        JSON.stringify(songs)
+      )
+      res.status(resp.status).send({
+        status: resp.statusText,
+        data: resp.text,
+      })
+    }
+  } catch (error) {
+    res
+      .status(errorServer.status)
+      .send({ status: errorServer.statusText, data: errorServer.text })
+  }
+})
