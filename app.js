@@ -10,8 +10,6 @@ const errorServer = {
   text: 'Error interno del servidor',
 }
 
-const CsbInspector = require('csb-inspector')
-CsbInspector()
 app.use(cors())
 app.use(express.json())
 
