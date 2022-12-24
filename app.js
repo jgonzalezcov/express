@@ -102,7 +102,7 @@ const validateId = async (song) => {
     result = {
       status: 400,
       statusText: 'error',
-      text: 'tttttInfo Server: El id de la canción no existe',
+      text: 'Info Server: El id de la canción no existe',
     }
   }
 
