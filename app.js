@@ -108,3 +108,16 @@ const validateId = async (song) => {
 
   return result
 }
+//leer lista de songs//
+app.get('/songs', async (req, res) => {
+  try {
+    const loadInfo = JSON.parse(
+      await fsPromises.readFile(__dirname + '/data/repertorio.json', 'utf8')
+    )
+    return res.json(loadInfo)
+  } catch (error) {
+    res
+      .status(errorServer.status)
+      .send({ status: errorServer.statusText, data: errorServer.text })
+  }
+})
