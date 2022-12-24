@@ -155,3 +155,38 @@ app.post('/songs', async (req, res) => {
       .send({ status: errorServer.statusText, data: errorServer.text })
   }
 })
+//eliminar song/
+app.delete('/songs/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const respId = await validateId(id)
+    if (respId.status === 400) {
+      res.status(respId.status).send({
+        status: respId.statusText,
+        data: respId.text,
+      })
+      return
+    }
+
+    if (id !== '') {
+      const songs = JSON.parse(
+        await fsPromises.readFile(
+          path.resolve(__dirname + '/data/repertorio.json')
+        )
+      )
+      const index = songs.findIndex((p) => p.id == id)
+      songs.splice(index, 1)
+      await fsPromises.writeFile(
+        path.resolve(__dirname + '/data/repertorio.json'),
+        JSON.stringify(songs)
+      )
+      return res.send('Canción eliminada con éxito')
+    } else {
+      res.status(400).send({ status: 'ok', data: 'No se ha recibido el id' })
+    }
+  } catch (error) {
+    res
+      .status(errorServer.status)
+      .send({ status: errorServer.statusText, data: errorServer.text })
+  }
+})
