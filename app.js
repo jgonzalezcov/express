@@ -9,21 +9,8 @@ const errorServer = {
   statusText: 'error',
   text: 'Error interno del servidor',
 }
-
 app.use(cors())
 app.use(express.json())
-
-//Ir al Home//
-app.get('/', (req, res) => {
-  try {
-    return res.sendFile(path.resolve(__dirname + '/public/index.html'))
-  } catch (e) {
-    res
-      .status(errorServer.status)
-      .send({ status: errorServer.statusText, data: errorServer.text })
-  }
-})
-
 app.listen(port, () => {
   console.log('El servidor esta activo en el puerto', port)
 })
@@ -72,9 +59,9 @@ const validateSong = async (song) => {
   )
   let listSongs = loadInfo.filter(
     (s) =>
-      s.tono === song.tono &&
-      s.titulo === song.titulo &&
-      s.artista === song.artista
+      s.tono.toUpperCase() === song.tono.toUpperCase() &&
+      s.titulo.toUpperCase() === song.titulo.toUpperCase() &&
+      s.artista.toUpperCase() === song.artista.toUpperCase()
   )
   numSongs = listSongs.length
   if (numSongs !== 0) {
@@ -86,7 +73,6 @@ const validateSong = async (song) => {
   }
   return result
 }
-
 //Funcion valida que el id a eliminar o modificar exista//
 
 const validateId = async (song) => {
@@ -94,7 +80,6 @@ const validateId = async (song) => {
   const loadInfo = JSON.parse(
     await fsPromises.readFile(__dirname + '/data/repertorio.json', 'utf8')
   )
-
   let idModifi = loadInfo.filter((s) => s.id === song.id).length
   if (idModifi === 1) {
     result = {
@@ -103,9 +88,40 @@ const validateId = async (song) => {
       text: 'Info Server: El id de la canción no existe',
     }
   }
-
   return result
 }
+//Funcion valida que canción no exista al Modificar//
+const validateModifi = async (song) => {
+  result = ''
+  const loadInfo = JSON.parse(
+    await fsPromises.readFile(__dirname + '/data/repertorio.json', 'utf8')
+  )
+  let listSongs = loadInfo.filter(
+    (s) =>
+      s.id !== song.id &&
+      s.tono.toUpperCase() === song.tono.toUpperCase() &&
+      s.titulo.toUpperCase() === song.titulo.toUpperCase() &&
+      s.artista.toUpperCase() === song.artista.toUpperCase()
+  )
+  if (listSongs.length > 0) {
+    result = {
+      status: 400,
+      statusText: 'error',
+      text: 'Info Server: La canción al ser modificada agregaria una cancion ya existente',
+    }
+  }
+  return result
+}
+//Ir al Home//
+app.get('/', (req, res) => {
+  try {
+    return res.sendFile(path.resolve(__dirname + '/public/index.html'))
+  } catch (e) {
+    res
+      .status(errorServer.status)
+      .send({ status: errorServer.statusText, data: errorServer.text })
+  }
+})
 //leer lista de songs//
 app.get('/songs', async (req, res) => {
   try {
@@ -165,7 +181,6 @@ app.delete('/songs/:id', async (req, res) => {
       })
       return
     }
-
     if (id !== '') {
       const songs = JSON.parse(
         await fsPromises.readFile(
@@ -195,6 +210,16 @@ app.put('/songs/:id', async (req, res) => {
     const song = req.body
     const resp = await validateInput(song)
     const respId = await validateId(id)
+
+    const respmodifi = await validateModifi(song)
+    if (respmodifi.status === 400) {
+      res.status(respmodifi.status).send({
+        status: respmodifi.statusText,
+        data: respmodifi.text,
+      })
+      return
+    }
+
     if (respId.status === 400) {
       res.status(respId.status).send({
         status: respId.statusText,
